@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Σινεμά Θεσσαλονίκης – πρόγραμμα εβδομάδας</title>
+<style>
+  :root{
+    --bg:#f6f4ef; --card:#fffdf9; --ink:#1d1b18; --mute:#6f6a62; --line:#e4dfd5;
+    --accent:#b3401f; --chip:#efeae0; --good:#256b3f; --mid:#8a6a12; --low:#8d8778;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#161513; --card:#1f1d1a; --ink:#ece8df; --mute:#9a9488; --line:#33302b;
+      --accent:#e8805e; --chip:#2b2824; --good:#7fcf9b; --mid:#e0bd5a; --low:#8d8778; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:28px 18px 60px}
+  header h1{font:600 26px/1.15 Georgia,"Times New Roman",serif;margin:0 0 4px;letter-spacing:-.01em}
+  header p{margin:0;color:var(--mute);font-size:13px}
+  .bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:14px 0 10px;margin-top:14px;
+    border-bottom:1px solid var(--line)}
+  .days{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+  .days::-webkit-scrollbar{display:none}
+  .days button{flex:1 0 auto;min-width:62px;border:1px solid var(--line);background:var(--card);color:var(--ink);
+    border-radius:10px;padding:7px 8px;font:inherit;cursor:pointer;text-align:center}
+  .days button b{display:block;font-size:17px;font-variant-numeric:tabular-nums}
+  .days button span{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em}
+  .days button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+  .days button[aria-pressed=true] span{color:#fff;opacity:.85}
+  .days button.today:not([aria-pressed=true]){border-color:var(--accent)}
+  .opts{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:13px;color:var(--mute)}
+  .opts label{display:flex;align-items:center;gap:6px;cursor:pointer}
+  .opts select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-top:16px;overflow:hidden}
+  section h2{font:600 17px/1.2 Georgia,"Times New Roman",serif;margin:0;padding:14px 16px 2px}
+  section .area{padding:0 16px 10px;color:var(--mute);font-size:12px}
+  section .area a{color:var(--accent);text-decoration:none}
+  section .area a:hover{text-decoration:underline}
+  .note{margin:0 16px 12px;padding:8px 10px;background:var(--chip);border-radius:8px;font-size:12.5px;color:var(--mute)}
+  .film{display:grid;grid-template-columns:44px 1fr;gap:12px;padding:11px 16px;border-top:1px solid var(--line)}
+  .score{font:600 15px/1 ui-monospace,SFMono-Regular,Menlo,monospace;text-align:center;padding-top:3px;color:var(--low)}
+  .score small{display:block;font:400 9px/1.6 inherit;letter-spacing:.08em;color:var(--mute)}
+  .score.g{color:var(--good)} .score.m{color:var(--mid)}
+  .t{font-weight:600}
+  .o{color:var(--mute);font-size:13px}
+  .tag{display:inline-block;margin-left:6px;font-size:10.5px;padding:1px 6px;border-radius:99px;background:var(--chip);
+    color:var(--mute);font-weight:400;vertical-align:1px}
+  .times{display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:6px;align-items:baseline}
+  .hall{font-size:11px;color:var(--mute)}
+  .time{font:600 13px/1 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--chip);border-radius:6px;padding:4px 7px}
+  .time.q{outline:1px dashed var(--mid)}
+  .links{margin-top:6px;font-size:12px}
+  .links a{color:var(--accent);text-decoration:none;margin-right:12px}
+  .links a:hover{text-decoration:underline}
+  .empty{padding:12px 16px 16px;color:var(--mute);font-size:13px;border-top:1px solid var(--line)}
+  footer{margin-top:22px;color:var(--mute);font-size:12px}
+  footer a{color:inherit}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Σινεμά Θεσσαλονίκης</h1>
+    <p id="sub"></p>
+  </header>
+  <div class="bar">
+    <div class="days" id="days"></div>
+    <div class="opts">
+      <label>Ταξινόμηση
+        <select id="sort"><option value="time">ώρα</option><option value="imdb">IMDb</option></select>
+      </label>
+      <label><input type="checkbox" id="min7"> μόνο IMDb 7+</label>
+    </div>
+  </div>
+  <main id="main"></main>
+  <footer>
+    Πρόγραμμα από τα site των σινεμά: cineplexx.gr, villagecinemas.gr, kolossaion.com.
+    Παύλα στη βαθμολογία σημαίνει ότι η ταινία δεν έχει βγει ακόμα, έχει κάτω από 100 ψήφους ή δεν ταυτίστηκε με βεβαιότητα.
+    Το «Εισιτήρια» ανοίγει τη σελίδα της ταινίας σε Village και Cineplexx, και τη σελίδα κρατήσεων του σινεμά στα υπόλοιπα.
+    Επιβεβαίωσε την ώρα στο σινεμά πριν πας.
+    Information courtesy of <a href="https://www.imdb.com">IMDb</a>. Used with permission.
+  </footer>
+</div>
+<script>
+const DATA = {"updated":"17/11 11:20","days":["2026-11-17","2026-11-18","2026-11-19","2026-11-20","2026-11-21","2026-11-22","2026-11-23"],"cinemas":[{"id":"olympion","name":"Ολύμπιον","area":"Πλ. Αριστοτέλους","tickets":"https://filmfestival.gr/el/whats-on/","via":"filmfestival.gr","note":"Δεν υπάρχει ακόμα αυτόματη πηγή για αυτό το σινεμά.","films":[]},{"id":"makedonikon","name":"Μακεδονικόν","area":"Εθν. Αμύνης & Σβώλου","tickets":"https://www.more.com/gr-el/tickets/cinema/festival/kinimatografos-makedonikon/","via":"more.com","note":"Πρόγραμμα αναρτημένο έως 18/11.","films":[{"gr":"Naza","orig":"Naza","imdb":8.4,"imdb_id":"tt44766123","tag":null,"book":null,"shows":[{"hall":"","days":{"2026-11-17":["20:15"],"2026-11-18":["17:30"]}}]},{"gr":"Βασίλισσα στη Θάλασσα","orig":"Queen at Sea","imdb":7.5,"imdb_id":"tt27541205","tag":null,"book":null,"shows":[{"hall":"","days":{"2026-11-17":["18:00"]}}]},{"gr":"Λογική και ευαισθησία","orig":"Sense and Sensibility","imdb":7.2,"imdb_id":"tt13609648","tag":null,"book":null,"shows":[{"hall":"","days":{"2026-11-18":["19:00"]}}]},{"gr":"Ντίγκερ","orig":"Digger","imdb":7.5,"imdb_id":"tt31450459","tag":null,"book":null,"shows":[{"hall":"","days":{"2026-11-17":["21:45"],"2026-11-18":["21:30"]}}]}]},{"id":"vakoura","name":"Βακούρα","area":"Ι. Μιχαήλ 8","tickets":"https://www.more.com/gr-el/tickets/cinema/kinimatografos-bakoura/","via":"more.com","note":"Πρόγραμμα αναρτημένο έως 18/11.","films":[{"gr":"11 Χρόνια Δίκη Χρυσή Αυγή: Οι Άνθρωποί της","orig":"","imdb":null,"imdb_id":null,"tag":null,"book":null,"shows":[{"hall":"Αίθ. 1","days":{"2026-11-17":["19:30"],"2026-11-18":["19:30"]}}]},{"gr":"Father","orig":"Father","imdb":7.3,"imdb_id":"tt28876088","tag":null,"book":null,"shows":[{"hall":"Αίθ. 2","days":{"2026-11-17":["19:00"],"2026-11-18":["19:00"]}}]},{"gr":"Wild Horse Nine","orig":"Wild Horse Nine","imdb":8.1,"imdb_id":"tt15799564","tag":null,"book":null,"shows":[{"hall":"Αίθ. 1","days":{"2026-11-17":["21:15"],"2026-11-18":["21:15"]}}]},{"gr":"Θάλασσα από γυαλί","orig":"Sea of Glass","imdb":null,"imdb_id":"tt29314986","tag":null,"book":null,"shows":[{"hall":"Αίθ. 2","days":{"2026-11-17":["20:50"],"2026-11-18":["20:50"]}}]},{"gr":"Οι δαιμονισμένες","orig":"The Devils","imdb":7.8,"imdb_id":"tt0066993","tag":null,"book":null,"shows":[{"hall":"Αίθ. 2","days":{"2026-11-17":["23:00"],"2026-11-18":["23:00"]}}]},{"gr":"Τα Κάλαντα του Σκρουτζ","orig":"Ebenezer","imdb":7.2,"imdb_id":"tt38773219","tag":null,"book":null,"shows":[{"hall":"Αίθ. 2","days":{"2026-11-17":["17:00"],"2026-11-18":["17:00"]}}]},{"gr":"Το μίσος","orig":"La haine","imdb":8.1,"imdb_id":"tt0113247","tag":null,"book":null,"shows":[{"hall":"Αίθ. 1","days":{"2026-11-18":["23:20"]}}]},{"gr":"Φτιαγμένος για Εκείνη","orig":"Wicker","imdb":7.4,"imdb_id":"tt29611136","tag":null,"book":null,"shows":[{"hall":"Αίθ. 1","days":{"2026-11-17":["17:30"],"2026-11-18":["17:30"]}}]}]},{"id":"kolossaion","name":"Κολοσσαίον","area":"Βασ. Όλγας 150","tickets":"https://cometogether.live/el/organizers/kinimatografos-kolossaion","via":"cometogether.live","note":"Πρόγραμμα αναρτημένο έως 18/11.","films":[{"gr":"Wild Horse Nine","orig":"Wild Horse Nine","imdb":8.1,"imdb_id":"tt15799564","tag":null,"book":null,"shows":[{"hall":"","days":{"2026-11-17":["20:50"],"2026-11-18":["20:50"]}}]},{"gr":"Οι δαιμονισμένες","orig":"The Devils","imdb":7.8,"imdb_id":"tt0066993","tag":null,"book":null,"shows":[{"hall":"","days":{"2026-11-17":["22:50"],"2026-11-18":["22:50"]}}]},{"gr":"Φιόρδ","orig":"Fjord","imdb":7.6,"imdb_id":"tt35410859","tag":null,"book":null,"shows":[{"hall":"","days":{"2026-11-18":["18:00"]}}]},{"gr":"Φτιαγμένος για Εκείνη","orig":"Wicker","imdb":7.4,"imdb_id":"tt29611136","tag":null,"book":null,"shows":[{"hall":"","days":{"2026-11-17":["19:00"]}}]}]},{"id":"apollon","name":"Απόλλων","area":"Σαρανταπόρου 4","tickets":"https://www.more.com/gr-el/tickets/cinemas/therina-cinema/apollon/","via":"more.com","note":"Πρόγραμμα αναρτημένο έως 18/11.","films":[{"gr":"Η έβδομη σφραγίδα","orig":"The Seventh Seal","imdb":8.1,"imdb_id":"tt0050976","tag":null,"book":null,"shows":[{"hall":"","days":{"2026-11-18":["18:00"]}}]},{"gr":"Μάτια ερμητικά κλειστά","orig":"Eyes Wide Shut","imdb":7.5,"imdb_id":"tt0120663","tag":null,"book":null,"shows":[{"hall":"","days":{"2026-11-17":["19:30"]}}]},{"gr":"Οι δαιμονισμένες","orig":"The Devils","imdb":7.8,"imdb_id":"tt0066993","tag":null,"book":null,"shows":[{"hall":"","days":{"2026-11-18":["19:40"]}}]},{"gr":"Σύντομη συνάντηση","orig":"Brief Encounter","imdb":8.0,"imdb_id":"tt0037558","tag":null,"book":null,"shows":[{"hall":"","days":{"2026-11-17":["18:00"]}}]}]},{"id":"cineplexx","name":"Cineplexx One Salonica","area":"Γιαννιτσών 61","tickets":"https://www.cineplexx.gr/cinemas/Cineplexx-ONE-Salonica","via":"cineplexx.gr","note":"Πρόγραμμα αναρτημένο έως 18/11.","films":[{"gr":"Clayface","orig":"Clayface","imdb":7.5,"imdb_id":"tt34890576","tag":null,"book":"https://www.cineplexx.gr/film/clayface","shows":[{"hall":"Αίθ. 6","days":{"2026-11-17":["21:15"],"2026-11-18":["21:15"]}}]},{"gr":"COYOTE vs ACME","orig":"Coyote vs. Acme","imdb":7.3,"imdb_id":"tt1756855","tag":"μεταγλ.","book":"https://www.cineplexx.gr/film/coyote-vs-acme","shows":[{"hall":"Αίθ. 4","days":{"2026-11-17":["18:30"],"2026-11-18":["18:30"]}}]},{"gr":"Godzilla Minus Zero","orig":"Gojira -0.0","imdb":7.9,"imdb_id":"tt34384661","tag":null,"book":"https://www.cineplexx.gr/film/godzilla-minus-zero","shows":[{"hall":"Αίθ. 1 IMAX","days":{"2026-11-17":["18:45"]}}]},{"gr":"Insidious: Έξω από το απώτερο","orig":"Insidious: Out of the Further","imdb":6.0,"imdb_id":"tt32393988","tag":null,"book":"https://www.cineplexx.gr/film/insidious-out-of-the-further","shows":[{"hall":"Αίθ. 4","days":{"2026-11-17":["23:00"],"2026-11-18":["23:00"]}}]},{"gr":"Minions & τέρατα","orig":"Minions & Monsters","imdb":6.3,"imdb_id":"tt32890033","tag":"μεταγλ.","book":"https://www.cineplexx.gr/film/minions-and-monsters","shows":[{"hall":"Αίθ. 6","days":{"2026-11-17":["19:15"],"2026-11-18":["19:15"]}}]},{"gr":"Resident Evil","orig":"Resident Evil","imdb":7.4,"imdb_id":"tt35538033","tag":null,"book":"https://www.cineplexx.gr/film/resident-evil","shows":[{"hall":"Αίθ. 4","days":{"2026-11-17":["20:45"],"2026-11-18":["20:45"]}}]},{"gr":"The Hunger Games: Η Ανατολή του Θερισμου","orig":"The Hunger Games: Sunrise on the Reaping","imdb":null,"imdb_id":"tt32558705","tag":null,"book":"https://www.cineplexx.gr/film/the-hunger-games-sunrise-on-the-reaping","shows":[{"hall":"Αίθ. 1 IMAX","days":{"2026-11-18":["18:20","21:30"]}}]},{"gr":"Άλλη μαμά","orig":"Other Mommy","imdb":5.3,"imdb_id":"tt36586020","tag":null,"book":"https://www.cineplexx.gr/film/other-mommy","shows":[{"hall":"Αίθ. 7","days":{"2026-11-17":["22:45"],"2026-11-18":["22:45"]}}]},{"gr":"Ένας γάτος με καπέλο","orig":"The Cat in the Hat","imdb":6.6,"imdb_id":"tt2321555","tag":"μεταγλ.","book":"https://www.cineplexx.gr/film/the-cat-in-the-hat","shows":[{"hall":"Αίθ. 5","days":{"2026-11-17":["18:00"],"2026-11-18":["18:00"]}}]},{"gr":"Κρακεν: το Τέρας των Βυθων","orig":"Kraken","imdb":4.9,"imdb_id":"tt19838566","tag":null,"book":"https://www.cineplexx.gr/film/kraken","shows":[{"hall":"Αίθ. 5","days":{"2026-11-17":["22:30"],"2026-11-18":["22:30"]}}]},{"gr":"Οδύσσεια","orig":"The Odyssey","imdb":8.4,"imdb_id":"tt33764258","tag":null,"book":"https://www.cineplexx.gr/film/the-odyssey","shows":[{"hall":"Αίθ. 1 IMAX","days":{"2026-11-17":["21:30"]}}]},{"gr":"Πώς να ληστέψεις μια τράπεζα","orig":"How to Rob a Bank","imdb":6.4,"imdb_id":"tt35866986","tag":null,"book":"https://www.cineplexx.gr/film/how-to-rob-a-bank","shows":[{"hall":"Αίθ. 3","days":{"2026-11-17":["19:50","22:15"],"2026-11-18":["19:50","22:15"]}}]},{"gr":"Πώς Να Ξανασωσετε Έναν Μαγο","orig":"How to Save the Immortal 2: Elixir of Life","imdb":null,"imdb_id":null,"tag":"μεταγλ.","book":"https://www.cineplexx.gr/film/how-to-save-the-immortal-2","shows":[{"hall":"Αίθ. 3","days":{"2026-11-17":["18:15"]}}]},{"gr":"Τα Κάλαντα του Σκρουτζ","orig":"Ebenezer: A Christmas Carol","imdb":7.2,"imdb_id":"tt38773219","tag":null,"book":"https://www.cineplexx.gr/film/ebenezer-a-christmas-carol","shows":[{"hall":"Αίθ. 2","days":{"2026-11-17":["19:30","21:50"],"2026-11-18":["19:30","21:50"]}},{"hall":"Αίθ. 7","days":{"2026-11-17":["18:10","20:30"],"2026-11-18":["18:10","20:30"]}}]},{"gr":"Το Ημερολόγιο της Βέριτι","orig":"Verity","imdb":6.0,"imdb_id":"tt32261958","tag":null,"book":"https://www.cineplexx.gr/film/verity","shows":[{"hall":"Αίθ. 5","days":{"2026-11-17":["20:15"],"2026-11-18":["20:15"]}}]}]},{"id":"village-cosmos","name":"Village Cosmos","area":"Mediterranean Cosmos","tickets":"https://www.villagecinemas.gr/el/kinimatografoi/village-med-cosmos/","via":"villagecinemas.gr","note":"Πρόγραμμα αναρτημένο έως 21/11.","films":[{"gr":"Bts World Tour Arirang In Kaohsiung: Live Viewing","orig":"Bts World Tour Arirang In Kaohsiung: Live Viewing","imdb":null,"imdb_id":"tt50486016","tag":null,"book":"https://www.villagecinemas.gr/el/movie/bts-world-tour-arirang-in-kaohsiung-live-viewing?cinemaId=22","shows":[{"hall":"Αίθ. 4","days":{"2026-11-21":["12:45","17:00"]}}]},{"gr":"COYOTE vs ACME","orig":"COYOTE vs ACME","imdb":7.3,"imdb_id":"tt1756855","tag":"υπότιτλοι","book":"https://www.villagecinemas.gr/el/movie/coyote-vs-acme-(ypotitlismeno)?cinemaId=22","shows":[{"hall":"Αίθ. 1","days":{"2026-11-17":["17:45"],"2026-11-18":["17:45"]}},{"hall":"Αίθ. 3","days":{"2026-11-17":["20:15"]}}]},{"gr":"George Michael: the Faith Tour","orig":"George Michael: the Faith Tour","imdb":8.6,"imdb_id":"tt40564737","tag":null,"book":"https://www.villagecinemas.gr/el/movie/george-michael-the-faith-tour?cinemaId=22","shows":[{"hall":"Αίθ. 2","days":{"2026-11-18":["19:10"]}}]},{"gr":"Godzilla Minus Zero","orig":"Gojira -0.0","imdb":7.9,"imdb_id":"tt34384661","tag":null,"book":"https://www.villagecinemas.gr/el/movie/godzilla-minus-zero?cinemaId=22","shows":[{"hall":"Αίθ. 8","days":{"2026-11-17":["21:00"],"2026-11-18":["21:00"]}}]},{"gr":"The Hunger Games: Η Ανατολή του Θερισμου","orig":"The Hunger Games: Sunrise on the Reaping","imdb":null,"imdb_id":"tt32558705","tag":null,"book":"https://www.villagecinemas.gr/el/movie/the-hunger-games-i-anatoli-tou-therismou-the-hunger-games-sunrise-on-the-reaping?cinemaId=22","shows":[{"hall":"Αίθ. 4","days":{"2026-11-18":["19:00","22:15"]}}]},{"gr":"Wild Horse Nine","orig":"Wild Horse Nine","imdb":8.1,"imdb_id":"tt15799564","tag":null,"book":"https://www.villagecinemas.gr/el/movie/wild-horse-nine?cinemaId=22","shows":[{"hall":"Αίθ. 1","days":{"2026-11-17":["20:40"],"2026-11-18":["20:40"]}}]},{"gr":"Γιορτινη Διασκεδαση με Την Πέππα","orig":"","imdb":null,"imdb_id":null,"tag":"μεταγλ.","book":"https://www.villagecinemas.gr/el/movie/giortini-diaskedasi-me-tin-peppa-(metaglottismeno)?cinemaId=22","shows":[{"hall":"Αίθ. 2","days":{"2026-11-17":["17:30"],"2026-11-18":["17:30"]}}]},{"gr":"Γκάζια στο Κόκκινο","orig":"The Mongoose","imdb":5.0,"imdb_id":"tt13611778","tag":null,"book":"https://www.villagecinemas.gr/el/movie/gkazia-sto-kokkino-the-mongoose?cinemaId=22","shows":[{"hall":"Αίθ. 3","days":{"2026-11-17":["22:50"]}}]},{"gr":"Ένας γάτος με καπέλο","orig":"The Cat in the Hat","imdb":6.6,"imdb_id":"tt2321555","tag":"μεταγλ.","book":"https://www.villagecinemas.gr/el/movie/enas-gatos-me-kapelo-(metaglottismeno)?cinemaId=22","shows":[{"hall":"Kids 9","days":{"2026-11-17":["17:40","20:10"],"2026-11-18":["17:40","20:10"]}},{"hall":"Αίθ. 4","days":{"2026-11-17":["17:00"]}},{"hall":"Αίθ. 7","days":{"2026-11-17":["20:45"],"2026-11-18":["20:45"]}}]},{"gr":"Κρακεν: το Τέρας των Βυθων","orig":"Kraken","imdb":4.9,"imdb_id":"tt19838566","tag":null,"book":"https://www.villagecinemas.gr/el/movie/kraken-to-teras-ton-vython-kraken?cinemaId=22","shows":[{"hall":"Αίθ. 2","days":{"2026-11-17":["21:45"],"2026-11-18":["21:45"]}}]},{"gr":"Μικροί Ήρωες","orig":"Les Légendaires","imdb":5.9,"imdb_id":"tt35659725","tag":"μεταγλ.","book":"https://www.villagecinemas.gr/el/movie/mikroi-iroes-(metaglottismeno)?cinemaId=22","shows":[{"hall":"Αίθ. 3","days":{"2026-11-17":["18:00"],"2026-11-18":["18:00"]}}]},{"gr":"Οι δαιμονισμένες","orig":"The Devils","imdb":7.8,"imdb_id":"tt0066993","tag":"επανέκδοση","book":"https://www.villagecinemas.gr/el/movie/oi-daimonismenes-(epanekdosi1971)-the-devils-(re-release1971)?cinemaId=22","shows":[{"hall":"Αίθ. 1","days":{"2026-11-17":["23:10"],"2026-11-18":["23:10"]}}]},{"gr":"Πώς να ληστέψεις μια τράπεζα","orig":"How to Rob a Bank","imdb":6.4,"imdb_id":"tt35866986","tag":null,"book":"https://www.villagecinemas.gr/el/movie/pos-na-listepseis-mia-trapeza-how-to-rob-a-bank?cinemaId=22","shows":[{"hall":"Αίθ. 3","days":{"2026-11-18":["20:10","22:50"]}},{"hall":"Αίθ. 4","days":{"2026-11-17":["19:30","22:15"]}}]},{"gr":"Πώς Να Ξανασωσετε Έναν Μαγο","orig":"How to Save the Immortal 2: Elixir of Life","imdb":null,"imdb_id":null,"tag":"μεταγλ.","book":"https://www.villagecinemas.gr/el/movie/pos-na-xanasosete-enan-mago-(metaglottismeno)?cinemaId=22","shows":[{"hall":"Αίθ. 4","days":{"2026-11-18":["17:00"]}},{"hall":"Αίθ. 7","days":{"2026-11-17":["18:30"],"2026-11-18":["18:30"]}}]},{"gr":"Ρόκι, τα χρυσά γάντια","orig":"Rocky","imdb":8.1,"imdb_id":"tt0075148","tag":"επανέκδοση","book":"https://www.villagecinemas.gr/el/movie/rocky-(epanekdosi1976)?cinemaId=22","shows":[{"hall":"Αίθ. 2","days":{"2026-11-17":["19:10"]}}]},{"gr":"Στην Καρδιά του Κτήνους","orig":"Heart of the Beast","imdb":7.1,"imdb_id":"tt7526136","tag":null,"book":"https://www.villagecinemas.gr/el/movie/stin-kardia-tou-ktinous-heart-of-the-beast?cinemaId=22","shows":[{"hall":"Αίθ. 8","days":{"2026-11-17":["18:40"],"2026-11-18":["18:40"]}}]},{"gr":"Τα Κάλαντα του Σκρουτζ","orig":"Ebenezer","imdb":7.2,"imdb_id":"tt38773219","tag":null,"book":"https://www.villagecinemas.gr/el/movie/ta-kalanta-tou-skroutz-ebenezer?cinemaId=22","shows":[{"hall":"Comfort 10","days":{"2026-11-17":["19:20","22:00"],"2026-11-18":["19:20","22:00"]}},{"hall":"Kids 9","days":{"2026-11-17":["22:40"],"2026-11-18":["22:40"]}},{"hall":"V-Max 6","days":{"2026-11-17":["18:15","21:15"],"2026-11-18":["18:15","21:15"]}},{"hall":"Αίθ. 5","days":{"2026-11-17":["17:15","19:50","22:30"],"2026-11-18":["17:15","19:50","22:30"]}}]}]},{"id":"village-makedonia","name":"Village Makedonia","area":"Τομπάζη 15","tickets":"https://www.villagecinemas.gr/el/kinimatografoi/village-makedonia-mall/","via":"villagecinemas.gr","note":"Πρόγραμμα αναρτημένο έως 18/11.","films":[{"gr":"The Hunger Games: Η Ανατολή του Θερισμου","orig":"The Hunger Games: Sunrise on the Reaping","imdb":null,"imdb_id":"tt32558705","tag":null,"book":"https://www.villagecinemas.gr/el/movie/the-hunger-games-i-anatoli-tou-therismou-the-hunger-games-sunrise-on-the-reaping?cinemaId=34","shows":[{"hall":"Αίθ. 2","days":{"2026-11-18":["18:30","21:45"]}}]},{"gr":"Wild Horse Nine","orig":"Wild Horse Nine","imdb":8.1,"imdb_id":"tt15799564","tag":null,"book":"https://www.villagecinemas.gr/el/movie/wild-horse-nine?cinemaId=34","shows":[{"hall":"Αίθ. 1","days":{"2026-11-17":["19:00","21:30"],"2026-11-18":["19:00","21:30"]}},{"hall":"Αίθ. 4","days":{"2026-11-17":["22:30"],"2026-11-18":["22:30"]}}]},{"gr":"Ένας γάτος με καπέλο","orig":"The Cat in the Hat","imdb":6.6,"imdb_id":"tt2321555","tag":"μεταγλ.","book":"https://www.villagecinemas.gr/el/movie/enas-gatos-me-kapelo-(metaglottismeno)?cinemaId=34","shows":[{"hall":"Αίθ. 3","days":{"2026-11-17":["19:40"],"2026-11-18":["19:40"]}}]},{"gr":"Πώς να ληστέψεις μια τράπεζα","orig":"How to Rob a Bank","imdb":6.4,"imdb_id":"tt35866986","tag":null,"book":"https://www.villagecinemas.gr/el/movie/pos-na-listepseis-mia-trapeza-how-to-rob-a-bank?cinemaId=34","shows":[{"hall":"Αίθ. 3","days":{"2026-11-17":["22:00"],"2026-11-18":["22:00"]}}]},{"gr":"Πώς Να Ξανασωσετε Έναν Μαγο","orig":"How to Save the Immortal 2: Elixir of Life","imdb":null,"imdb_id":null,"tag":"μεταγλ.","book":"https://www.villagecinemas.gr/el/movie/pos-na-xanasosete-enan-mago-(metaglottismeno)?cinemaId=34","shows":[{"hall":"Αίθ. 4","days":{"2026-11-17":["18:00"],"2026-11-18":["18:00"]}}]},{"gr":"Τα Κάλαντα του Σκρουτζ","orig":"Ebenezer","imdb":7.2,"imdb_id":"tt38773219","tag":null,"book":"https://www.villagecinemas.gr/el/movie/ta-kalanta-tou-skroutz-ebenezer?cinemaId=34","shows":[{"hall":"Αίθ. 2","days":{"2026-11-17":["18:30","21:00"]}},{"hall":"Αίθ. 4","days":{"2026-11-17":["20:00"],"2026-11-18":["20:00"]}}]}]}]};
+const DN = ["Κυρ","Δευ","Τρι","Τετ","Πεμ","Παρ","Σαβ"];
+const MN = ["Ιαν","Φεβ","Μαρ","Απρ","Μαΐ","Ιουν","Ιουλ","Αυγ","Σεπ","Οκτ","Νοε","Δεκ"];
+const pd = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const now = new Date();
+const todayIso = [now.getFullYear(), String(now.getMonth()+1).padStart(2,"0"), String(now.getDate()).padStart(2,"0")].join("-");
+let day = DATA.days.includes(todayIso) ? todayIso : DATA.days[0];
+let sort = "time", min7 = false;
+
+const f = pd(DATA.days[0]), l = pd(DATA.days[DATA.days.length-1]);
+document.getElementById("sub").textContent =
+  `${f.getDate()} ${MN[f.getMonth()]} – ${l.getDate()} ${MN[l.getMonth()]} · ενημέρωση ${DATA.updated}`;
+
+function renderDays(){
+  document.getElementById("days").innerHTML = DATA.days.map(d => {
+    const x = pd(d);
+    return `<button data-d="${d}" aria-pressed="${d===day}" class="${d===todayIso?"today":""}"><span>${DN[x.getDay()]}</span><b>${x.getDate()}</b></button>`;
+  }).join("");
+}
+function render(){
+  renderDays();
+  document.getElementById("main").innerHTML = DATA.cinemas.map(c => {
+    let rows = c.films.map(fm => {
+      const shows = fm.shows.filter(s => s.days[day] && s.days[day].length);
+      if (!shows.length) return null;
+      const first = shows.map(s => s.days[day][0]).sort()[0];
+      return {fm, shows, first};
+    }).filter(Boolean);
+    if (min7) rows = rows.filter(r => r.fm.imdb != null && r.fm.imdb >= 7);
+    rows.sort((a,b) => sort === "imdb"
+      ? (b.fm.imdb ?? -1) - (a.fm.imdb ?? -1) || a.first.localeCompare(b.first)
+      : a.first.localeCompare(b.first) || a.fm.gr.localeCompare(b.fm.gr, "el"));
+    const body = rows.length ? rows.map(({fm, shows}) => {
+      const r = fm.imdb;
+      const cls = r == null ? "" : r >= 7 ? "g" : r >= 6 ? "m" : "";
+      const q = fm.orig || fm.gr;
+      const times = shows.map(s =>
+        (s.hall ? `<span class="hall">${esc(s.hall)}</span>` : "") +
+        s.days[day].map(t => `<span class="time${s.unsure?" q":""}">${t}</span>`).join("")).join("");
+      return `<div class="film">
+        <div class="score ${cls}">${r == null ? "–" : r.toFixed(1)}<small>IMDb</small></div>
+        <div>
+          <div class="t">${esc(fm.gr)}${fm.tag ? `<span class="tag">${esc(fm.tag)}</span>` : ""}</div>
+          ${fm.orig && fm.orig !== fm.gr ? `<div class="o">${esc(fm.orig)}</div>` : ""}
+          <div class="times">${times}</div>
+          <div class="links">
+            <a href="https://letterboxd.com/search/films/${encodeURIComponent(q)}/" target="_blank" rel="noopener">Letterboxd ↗</a>
+            ${(fm.book || c.tickets)
+              ? `<a href="${esc(fm.book || c.tickets)}" target="_blank" rel="noopener">Εισιτήρια ↗</a>` : ""}
+            ${fm.imdb_id ? `<a href="https://www.imdb.com/title/${esc(fm.imdb_id)}/" target="_blank" rel="noopener">IMDb ↗</a>` : ""}
+          </div>
+        </div></div>`;
+    }).join("") : `<div class="empty">${c.films.length ? (min7 ? "Καμία ταινία με IMDb 7+ αυτή τη μέρα." : "Δεν έχει ανακοινωθεί πρόγραμμα για αυτή τη μέρα.") : "Χωρίς πρόγραμμα."}</div>`;
+    return `<section><h2>${esc(c.name)}</h2><div class="area">${esc(c.area)}${c.tickets ? ` · <a href="${esc(c.tickets)}" target="_blank" rel="noopener">εισιτήρια στο ${esc(c.via)} ↗</a>` : " · δεν βρέθηκε σελίδα online κράτησης"}</div>${c.note ? `<p class="note">${esc(c.note)}</p>` : ""}${body}</section>`;
+  }).join("");
+}
+document.getElementById("days").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return; day = b.dataset.d; render();
+});
+document.getElementById("sort").addEventListener("change", e => { sort = e.target.value; render(); });
+document.getElementById("min7").addEventListener("change", e => { min7 = e.target.checked; render(); });
+render();
+</script>
+</body>
+</html>
